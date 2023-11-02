@@ -1,0 +1,13 @@
+# Use Node.js 14 as the base image
+FROM node:21.1
+
+# Set the working directory
+WORKDIR /server
+
+# Expose port 5000
+EXPOSE 5000
+
+# Run the app
+CMD ["/bin/bash"]
+
+

@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+ react1:
+  build: ./frontend
+  container_name: r1
+  ports:
+   - "80:3000"
+  volumes:
+   - ./frontend:/app
+  stdin_open: true
+  tty: true
+ node1:
+  build: ./backend
+  container_name: n1
+  ports:
+   - "5000:5000"
+  volumes:
+   - ./backend:/server
+  stdin_open: true
+  tty: true
+ couchdb1:
+  image: couchdb:3.2.0
+  container_name: cdb1
+  ports:
+   - "5984:5984"
+  volumes:
+   - ./couchdb:/opt/couchdb/data
+  environment:
+   - COUCHDB_USER=admin
+   - COUCHDB_PASSWORD=password
