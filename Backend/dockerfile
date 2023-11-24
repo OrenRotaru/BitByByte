@@ -4,6 +4,12 @@ FROM node:21.1
 # Set the working directory
 WORKDIR /server
 
+# copy .json files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
 # Expose port 5000
 EXPOSE 5000
 
