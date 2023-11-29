@@ -36,12 +36,12 @@ const loginUser = async (req, res) => {
   // create token
   const token = createToken(user.docs[0]._id);
 
-  res.status(200).json({ email, token });
+  res.status(200).json({ username: user.docs[0].username, email: email, token: token });
 };
 
 // signup user
 const signupUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, email, password } = req.body;
   // check if email and password are provided
   if (!email || !password) {
     return res.status(400).json({ msg: "Please enter all fields" });
@@ -72,6 +72,7 @@ const signupUser = async (req, res) => {
 
   // create user
   const user = {
+    username: username,
     email: email,
     password: hashedPassword,
   };
@@ -93,7 +94,7 @@ const signupUser = async (req, res) => {
     // create token
     const token = createToken(createdUserId);
 
-    res.status(200).json({ email, token });
+    res.status(200).json({ username, email, token });
     if (debug) console.log("User with email: " + email + " created.");
   } catch (err) {
     res

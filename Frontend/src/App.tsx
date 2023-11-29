@@ -3,6 +3,7 @@ import { useAuthContext } from "./hooks/useAuthContext";
 import "./App.css";
 
 // pages & components
+import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -17,9 +18,10 @@ const { user } = useAuthContext();
         <Navbar />
         <div className="pages">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" /> } />
-            <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" /> } />
+            <Route path="/home" element={user ? <Home /> : <Navigate to="/" /> } />
+            <Route path="/" element={!user ? <Landing /> : <Navigate to="/home" /> } />
+            <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" /> } />
+            <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/home" /> } />
           </Routes>
         </div>
       </BrowserRouter>

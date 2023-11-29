@@ -26,7 +26,7 @@ const Navigation = () => {
       </Navbar.Brand>
       {user && (
             <div>
-              <span className="text-white">{user.email}</span>
+              <span className="text-white">{user.username}</span>
             </div>
           )}
       <div>

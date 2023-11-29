@@ -4,6 +4,7 @@ import { useSignup } from "../hooks/useSignup";
 const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const { signup, isLoading, error } = useSignup();
 
   /**
@@ -15,7 +16,7 @@ const Signup = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    await signup(email, password);
+    await signup(username, email, password);
   };
 
   return (
@@ -25,6 +26,17 @@ const Signup = () => {
           <div className="p-4">
             <h1 className="text-center mb-4">Signup</h1>
             <form className="signup" onSubmit={handleSubmit}>
+            <div className="form-group mb-3">
+              <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  className="form-control"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                />
+              </div>
               <div className="form-group mb-3">
                 <label htmlFor="email">Email</label>
                 <input
