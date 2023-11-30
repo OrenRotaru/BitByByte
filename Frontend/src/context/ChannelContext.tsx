@@ -29,7 +29,7 @@ export const channelReducer = (state: any, action: any) => {
         case "DELETE_CHANNEL":
             return {
                 channels: state.channels.filter(
-                    (channel: any) => channel.id !== action.payload
+                    (channel: any) => channel._id !== action.payload._id
                 ),
             };
         default:

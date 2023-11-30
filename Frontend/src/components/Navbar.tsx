@@ -26,7 +26,7 @@ const Navigation = () => {
       </Navbar.Brand>
       {user && (
             <div>
-              <span className=" tw-text-blue-100 tw-text-lg tw-font-bold">{user.username}</span>
+              <span className=" text-blue-100 text-lg font-bold">{user.username}</span>
             </div>
           )}
       <div>

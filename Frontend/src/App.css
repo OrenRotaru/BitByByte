@@ -5,16 +5,6 @@
 }
 
 
-/* navbar */
-nav {
-    display: flex;
-    align-items: center;
-}
-
-nav a {
-    margin-left: 10px;
-}
-
 /* auth forms */
 div.signup, div.login {
     display: flex;

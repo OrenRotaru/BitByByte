@@ -33,7 +33,9 @@ const ChannelController = {
     try {
       const channel = req.body;
       const result = await channelsDb.insert(channel);
-      res.status(201).json(result);
+      // send the complete channel object back to the client
+      const newChannel = await channelsDb.get(result.id);
+      res.status(201).json(newChannel);
       if (debug) console.log("created a new channel");
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -62,7 +64,7 @@ const ChannelController = {
       const id = req.params.id;
       const channel = await channelsDb.get(id);
       const result = await channelsDb.destroy(id, channel._rev);
-      res.status(200).json(result);
+      res.status(200).json(channel);
       if (debug) console.log("deleted channel");
     } catch (error) {
       res.status(500).json({ error: error.message });
