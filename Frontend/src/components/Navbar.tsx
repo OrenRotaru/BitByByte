@@ -1,4 +1,4 @@
-import { Navbar, Nav, NavDropdown, Button } from "react-bootstrap";
+import { Navbar, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../App.css";
@@ -26,7 +26,7 @@ const Navigation = () => {
       </Navbar.Brand>
       {user && (
             <div>
-              <span className="text-white">{user.username}</span>
+              <span className=" tw-text-blue-100 tw-text-lg tw-font-bold">{user.username}</span>
             </div>
           )}
       <div>

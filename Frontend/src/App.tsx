@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
+import Channel from "./pages/Channel";
 
 function App() {
 const { user } = useAuthContext();
@@ -22,6 +23,7 @@ const { user } = useAuthContext();
             <Route path="/" element={!user ? <Landing /> : <Navigate to="/home" /> } />
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" /> } />
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/home" /> } />
+            <Route path="/home/channel/:id" element={user ? <Channel /> : <Navigate to="/" /> } />
           </Routes>
         </div>
       </BrowserRouter>

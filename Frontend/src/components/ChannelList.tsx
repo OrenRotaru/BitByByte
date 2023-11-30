@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useAuthContext } from "../hooks/useAuthContext";
+import Sidebar from "./Sidebar";
+import { SidebarItem } from "./Sidebar";
+import { LayoutDashboard } from "lucide-react";
+import {SidebarContext} from "./Sidebar";
 
 interface Channel {
   _id: string;
@@ -10,20 +14,19 @@ interface Channel {
 const ChannelList: React.FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [newChannelName, setNewChannelName] = useState("");
-  const {user} = useAuthContext();
+  const { user } = useAuthContext();
 
   // API URL from the .env file
   const apiUrl = "http://127.0.0.1:5000/api/channels";
 
   // Function to fetch channels from the backend
   const fetchChannels = () => {
-
     // Only fetch channels if the user is logged in
     if (user) {
       fetch(apiUrl, {
         headers: {
-          "Accept": "application/json",
-          "Authorization": `Bearer ${user.token}`,
+          Accept: "application/json",
+          Authorization: `Bearer ${user.token}`,
         },
       })
         .then((response) => {
@@ -54,7 +57,7 @@ const ChannelList: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${user.token}`,
+          Authorization: `Bearer ${user.token}`,
         },
         body: JSON.stringify({ name: newChannelName }),
       });
@@ -77,7 +80,7 @@ const ChannelList: React.FC = () => {
       const response = await fetch(`${apiUrl!}/${channelId}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${user.token}`,
+          Authorization: `Bearer ${user.token}`,
         },
       });
       if (!response.ok) throw new Error("Error deleting channel");
@@ -89,28 +92,34 @@ const ChannelList: React.FC = () => {
 
   return (
     <div>
-      <div className="input-group mb-3">
-        <input
-          type="text"
-          value={newChannelName}
-          className="form-control"
-          onChange={(e) => setNewChannelName(e.target.value)}
-          placeholder="New channel name"
-        />
-        <button className="btn btn-primary" onClick={addChannel}>
-          Create Channel
-        </button>
-      </div>
-      <ul>
-        {channels.map((channel) => (
-          <div key={channel._id}>
-            {channel.name}
-            <button onClick={() => deleteChannel(channel._id)}>
-              <FiTrash2 />
+      <div className="tw-flex tw-min-h-screen tw-fixed tw-z-10">
+        <Sidebar>
+          <ul>
+            {channels.map((channel) => (
+              <SidebarItem
+                key={channel._id}
+                id={channel._id}
+                icon={<LayoutDashboard size={20} />}
+                text={channel.name}
+                active={false}
+                alert={false}
+              />
+            ))}
+          </ul>
+          <div className="input-group mb-3">
+            <input
+              type="text"
+              value={newChannelName}
+              className="form-control"
+              onChange={(e) => setNewChannelName(e.target.value)}
+              placeholder="New channel name"
+            />
+            <button className="btn btn-primary" onClick={addChannel}>
+              Create Channel
             </button>
           </div>
-        ))}
-      </ul>
+        </Sidebar>
+      </div>
     </div>
   );
 };
