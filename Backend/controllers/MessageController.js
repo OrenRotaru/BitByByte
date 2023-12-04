@@ -1,5 +1,6 @@
 const nano = require("nano")(process.env.COUCHDB_URL);
 const messagesDb = nano.db.use("messages");
+const usersDb = nano.db.use("users");
 const debug = process.env.DEBUG || false; // Debug mode
 
 const MessageController = {
@@ -99,24 +100,6 @@ const MessageController = {
         try {
             const message = req.body;
 
-            // // if the new message has a parent message
-            // if(message.parentMessage_id) {
-            //     if (debug) console.log("message has a parent message");
-            //     // add the new message to the parent message's replies array under "messages"
-            //     // first get the parent message
-            //     const parentMessage = await messagesDb.get(message.parentMessage_id);
-
-            //     // insert the message
-            //     const result = await messagesDb.insert(message);
-            //     if (debug) console.log("result: ", result);
-            //     // then add the new message to the replies array
-            //     parentMessage.messages.push(result.id);
-            //     // update the parent message
-            //     await messagesDb.insert(parentMessage);
-            //     // send the complete message object back to the client
-            //     const fullMessage = await messagesDb.get(result.id);
-            //     return res.status(201).json(fullMessage);
-            // }
             const result = await messagesDb.insert(message);
             // send the complete message object back to the client
             const newMessage = await messagesDb.get(result.id);
@@ -136,21 +119,6 @@ const MessageController = {
             // get the message to be deleted in full
             const messageToBeDeleted = await messagesDb.get(id);
 
-            // if the message has a parent message
-            // if(messageToBeDeleted.parentMessage_id) {
-            //     // remove the message from the parent message's replies array under "messages"
-            //     // first get the parent message
-            //     const parentMessageId = messageToBeDeleted.parentMessage_id;
-    
-            //     const parentMessage = await messagesDb.get(parentMessageId);
-            //     // then remove the message from the replies array
-            //     const index = parentMessage.messages.indexOf(id);
-            //     if (index > -1) {
-            //         parentMessage.messages.splice(index, 1);
-            //     }
-            //     // update the parent message
-            //     await messagesDb.insert(parentMessage);
-            // }
 
             // delete the message
             const result = await messagesDb.destroy(id, rev);
@@ -168,6 +136,21 @@ const MessageController = {
         try {
             const id = req.params.id;
             let message = await messagesDb.get(id);
+
+            // if we are updating the likesCount
+            if (req.body.likesCount) {
+                // also update the likesCount of the user who owns the message
+                const user = await usersDb.find({
+                    selector: {
+                        username: message.author
+                    }
+                });
+                const userDoc = user.docs[0];
+                userDoc.likesCount = userDoc.likesCount + req.body.likesCount;
+                await usersDb.insert(userDoc);
+            }
+
+
             // Merge existing message with new data
             message = { ...message, ...req.body };
             const result = await messagesDb.insert(message);

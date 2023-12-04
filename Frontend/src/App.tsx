@@ -9,9 +9,19 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Channel from "./pages/Channel";
+import { useEffect, useState } from "react";
 
 function App() {
 const { user } = useAuthContext();
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  setLoading(false);
+}, []);
+
+if (loading) {
+  return <div>Loading...</div>;
+}
 
   return (
     <>
@@ -23,7 +33,7 @@ const { user } = useAuthContext();
             <Route path="/" element={!user ? <Landing /> : <Navigate to="/home" /> } />
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" /> } />
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/home" /> } />
-            <Route path="/home/channel/:channelId" element={user ? <Channel /> : <Navigate to="/" /> } />
+            <Route path="/home/channel/:channelId" element={user ? <Channel />  : <Navigate to="/" /> } />
           </Routes>
         </div>
       </BrowserRouter>

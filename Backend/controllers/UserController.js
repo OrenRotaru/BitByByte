@@ -104,4 +104,22 @@ const signupUser = async (req, res) => {
   }
 };
 
-module.exports = { signupUser, loginUser };
+const patchUser = async (req, res) => {
+
+  const data = req.body;
+  const id = req.params.id;
+
+  try {
+    const user = await usersDb.get(id);
+    const updatedUser = {...user, ...data};
+    const result = await usersDb.insert(updatedUser);
+    // return the full updated user
+    const fullUpdatedUser = await usersDb.get(result.id);
+    res.status(200).json(fullUpdatedUser);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+}
+
+
+module.exports = { signupUser, loginUser, patchUser };

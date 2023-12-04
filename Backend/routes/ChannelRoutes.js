@@ -8,6 +8,7 @@ const {
 } = require("../controllers/ChannelController");
 const requireAuth = require("../middleware/requireAuth");
 
+
 const router = express.Router();
 
 // require authentication for channel routes
