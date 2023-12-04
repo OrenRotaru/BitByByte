@@ -23,7 +23,7 @@ const { user } = useAuthContext();
             <Route path="/" element={!user ? <Landing /> : <Navigate to="/home" /> } />
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" /> } />
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/home" /> } />
-            <Route path="/home/channel/:id" element={user ? <Channel /> : <Navigate to="/" /> } />
+            <Route path="/home/channel/:channelId" element={user ? <Channel /> : <Navigate to="/" /> } />
           </Routes>
         </div>
       </BrowserRouter>

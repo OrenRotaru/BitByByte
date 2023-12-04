@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import ChannelList from "../components/ChannelList";
 import defaultAvatar from "../assets/defaultAvatar.png";
-import { FaReply } from 'react-icons/fa';
+import { FaReply } from "react-icons/fa";
 import { FaArrowAltCircleUp, FaArrowAltCircleDown } from "react-icons/fa";
-
+import { useAuthContext } from "../hooks/useAuthContext";
+import imageCompression from "browser-image-compression";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -12,65 +13,217 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   hour12: true,
 });
 
-interface Comment {
-  id: string;
+const baseURL = "http://localhost:5000";
+
+interface Message {
+  _id: string;
+  channel: string;
+  author: string;
+  timeStamp: string;
   body: string;
-  comments: Array<Comment>;
+  parentMessage_id: string;
+  likesCount: number;
+  image: string;
+  messages: Array<Message>;
+  usersThatLiked: Array<string>;
 }
-const dummyComments: Comment[] = [
-  {
-    id: "1",
-    body: "This is the first comment",
-    comments: [],
-  },
-  {
-    id: "2",
-    body: "This is the second comment",
-    comments: [],
-  },
-  {
-    id: "3",
-    body: "This is the third comment",
-    comments: [],
-  },
-];
+
+const ChannelIdContext = React.createContext<string | undefined>(undefined);
 
 const Channel: React.FC = () => {
-  const { id } = useParams();
-  const [comments, setComments] = useState(dummyComments);
+  const { channelId } = useParams();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuthContext();
 
-  const onComment = (newComment: Comment) => {
-    setComments([...comments, newComment]);
+  useEffect(() => {
+    const fetchMessagesByChannel = async () => {
+      const response = await fetch(
+        `${baseURL}/api/messages/channel/${channelId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(
+          data.map((message: Message) => ({
+            ...message,
+            likesCount: message.likesCount,
+          }))
+        );
+      }
+    };
+
+    fetchMessagesByChannel();
+  }, []);
+
+  const createNewMessage = (messageBody: string, image: string) => {
+    const messageSend = {
+      channel: channelId,
+      author: user.username,
+      timeStamp: dateFormatter.format(new Date()),
+      body: messageBody,
+      parentMessage_id: "",
+      image: image || "",
+      likesCount: 0,
+      usersThatLiked: [],
+      messages: [],
+    };
+
+    // send the message to the backend
+    const postMessage = async () => {
+      const response = await fetch(`${baseURL}/api/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(messageSend),
+      });
+      if (response.ok) {
+        const fullMessage = await response.json();
+        setMessages([...messages, fullMessage]); // add the new message to the messages array
+        console.log(fullMessage);
+      }
+    };
+    postMessage();
   };
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1>Channel {id}</h1>
+        <h1>Channel {channelId}</h1>
         {/* Add your channel content here */}
-        <p>This is the page for channel {id}.</p>
+        <p>This is the page for channel {channelId}.</p>
       </div>
-      <CommentInput onComment={onComment} />
+      <MessageInput createNewMessage={createNewMessage} />
       <div className="flex flex-col gap-2 mt-10">
-        {comments.map((comment) => (
-          <CommentItem comment={comment} />
-        ))}
+        <ChannelIdContext.Provider value={channelId}>
+          {messages.map((message) => (
+            <MessageItem key={message._id} message={message} />
+          ))}
+        </ChannelIdContext.Provider>
       </div>
     </div>
   );
 };
 
-interface CommentItemProps {
-  comment: Comment;
+interface MessageItemProps {
+  message: Message;
 }
 
-const CommentItem = ({ comment }: CommentItemProps) => {
+const MessageItem = ({ message }: MessageItemProps) => {
   const [isReplying, setIsReplying] = useState(false);
-  const [comments, setComments] = useState(comment.comments);
+  const [messages, setMessages] = useState(message.messages);
+  const { user } = useAuthContext();
+  const channelId = useContext(ChannelIdContext);
+  const [voteCount, setVoteCount] = useState(0);
+  const [hasVotedUp, setHasVotedUp] = useState(false);
+  const [hasVotedDown, setHasVotedDown] = useState(false);
 
-  const onComment = (newComment: Comment) => {
-    setComments([ ...comments, newComment]);
+  useEffect(() => {
+    setVoteCount(message.likesCount);
+    if (
+      message.usersThatLiked &&
+      message.usersThatLiked.includes(user.username)
+    ) {
+      setHasVotedUp(true);
+      setHasVotedDown(false);
+    } else {
+      setHasVotedUp(false);
+      setHasVotedDown(false);
+    }
+  }, []);
+
+  const createNewMessage = (messageBody: string, image: string) => {
+    const newMessage = {
+      channel: channelId,
+      author: user.username,
+      timeStamp: dateFormatter.format(new Date()),
+      body: messageBody,
+      parentMessage_id: message._id,
+      image: image || "",
+      likesCount: 0,
+      usersThatLiked: [],
+      messages: [],
+    };
+
+    // send the message to the backend
+    const postMessage = async () => {
+      const response = await fetch(`${baseURL}/api/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(newMessage),
+      });
+      if (response.ok) {
+        const fullMessage = await response.json();
+        setMessages([...messages, fullMessage]); // add the new message to the messages array
+        console.log(fullMessage);
+      }
+    };
+    postMessage();
   };
+
+  function handleUpvote() {
+    // send a patch request to the backend to update the likes
+    const upVoteDB = async () => {
+      const response = await fetch(`${baseURL}/api/messages/${message._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          likesCount: voteCount + 1,
+          usersThatLiked: [...(message.usersThatLiked || []), user.username],
+        }),
+      });
+      if (response.ok) {
+        const updatedMessage = await response.json();
+        console.log(updatedMessage);
+      }
+    };
+    if (!hasVotedUp) {
+      setHasVotedUp(true);
+      setHasVotedDown(false);
+      setVoteCount(voteCount + 1);
+      upVoteDB();
+    }
+  }
+
+  function handleDownvote() {
+    // send a patch request to the backend to update the likes
+    const downVoteDB = async () => {
+      const response = await fetch(`${baseURL}/api/messages/${message._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          likesCount: voteCount - 1,
+          usersThatLiked: message.usersThatLiked 
+          ? message.usersThatLiked.filter((userThatLiked) => userThatLiked !== user.username)
+          : [],
+        }),
+      });
+      if (response.ok) {
+        const updatedMessage = await response.json();
+        console.log(updatedMessage);
+      }
+    };
+    if (!hasVotedDown) {
+      setHasVotedDown(true);
+      setHasVotedUp(false);
+      setVoteCount(voteCount - 1);
+      downVoteDB();
+    }
+  }
 
   return (
     <div className="grid grid-cols-12">
@@ -82,51 +235,64 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         />
         <div className="threadline border-l-2 border-gray-400 h-full mx-auto"></div>
       </div>
-      <div key={comment.id} className=" col-span-11 flex flex-col">
+      <div key={message._id} className=" col-span-11 flex flex-col">
         <div className="header flex flex-row">
-            <span className="font-bold mr-2">Username</span>
-            <span className="text-gray-400">
-                {dateFormatter.format(new Date())}
-            </span>
+          <span className="font-bold mr-2">{message.author}</span>
+          <span className="text-gray-400">{message.timeStamp}:</span>
         </div>
         <div className="min-w-0 overflow-auto break-words">
-            <span className="overflow-wrap break-word">{comment.body}</span>
+          {message.image && (
+            <img
+              className="max-w-xs max-h-xs"
+              src={message.image}
+              alt="message"
+            />
+          )}
+          <span className="overflow-wrap break-word">{message.body}</span>
         </div>
         <div className="footer flex flex-row">
-            <div className="vote-arrows flex flex-row space-x-1">
-                <button className="upvote transition-colors hover:bg-gray-200 rounded-lg"
-                >
-                    <FaArrowAltCircleUp />
-                </button>
-                <span className="text-gray-400">0</span>
-                <button className="downvote transition-colors hover:bg-gray-200 rounded-lg"
-                >
-                    <FaArrowAltCircleDown color="" />
-                </button>
-
-            </div>
-            {isReplying ? (
+          <div className="vote-arrows flex flex-row space-x-1">
             <button
-                className="w-15 ml-1 text-sm p-1 flex items-center transition-colors hover:bg-gray-200 rounded-lg"
-                onClick={() => setIsReplying(false)}
+              className="upvote transition-colors hover:bg-gray-200 rounded-lg"
+              onClick={handleUpvote}
             >
-                <FaReply className="mr-1" />
-                Cancel
+              <FaArrowAltCircleUp />
             </button>
-            ) : (
-                <button
-                className="w-15 ml-1 text-sm p-1 flex items-center transition-colors hover:bg-gray-200 rounded-lg"
-                onClick={() => setIsReplying(true)}
+            <span className="text-gray-400">{voteCount}</span>
+            <button
+              className="downvote transition-colors hover:bg-gray-200 rounded-lg"
+              onClick={handleDownvote}
             >
-                <FaReply className="mr-1" />
-                Reply
+              <FaArrowAltCircleDown color="" />
             </button>
-            )}
+          </div>
+          {isReplying ? (
+            <button
+              className="w-15 ml-1 text-sm p-1 flex items-center transition-colors hover:bg-gray-200 rounded-lg"
+              onClick={() => setIsReplying(false)}
+            >
+              <FaReply className="mr-1" />
+              Cancel
+            </button>
+          ) : (
+            <button
+              className="w-15 ml-1 text-sm p-1 flex items-center transition-colors hover:bg-gray-200 rounded-lg"
+              onClick={() => setIsReplying(true)}
+            >
+              <FaReply className="mr-1" />
+              Reply
+            </button>
+          )}
         </div>
-        {isReplying && <CommentInput onComment={onComment} />}
+        {isReplying && (
+          <MessageInput
+            setIsReplying={setIsReplying}
+            createNewMessage={createNewMessage}
+          />
+        )}
         <div className="flex flex-col gap-3">
-          {comments.map((comment) => (
-            <CommentItem comment={comment} />
+          {messages.map((message) => (
+            <MessageItem key={message._id} message={message} />
           ))}
         </div>
       </div>
@@ -134,39 +300,83 @@ const CommentItem = ({ comment }: CommentItemProps) => {
   );
 };
 
-interface CommentInputProps {
-  onComment: (newComment: Comment) => void;
+interface MessageInputProps {
+  createNewMessage: (messageBody: string, image: string) => void;
+  setIsReplying?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CommentInput = ({ onComment }: CommentInputProps) => {
-  const [commentBody, setCommentBody] = useState("");
+const MessageInput = ({
+  createNewMessage,
+  setIsReplying,
+}: MessageInputProps) => {
+  const [messageBody, setMessageBody] = useState("");
+  const [image, setImage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    function handleFileChange(): void {
-        throw new Error("Function not implemented.");
+  useEffect(() => {
+    console.log("Image: ", image);
+  }, [image]);
+
+  async function handleFileChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage(
+          "The image is too large. Please select an image smaller than 5MB."
+        );
+      } else {
+        setErrorMessage(null);
+        // Continue with your existing file handling code...
+        const options = {
+          maxSizeMB: 10, // (max file size in MB)
+          maxWidthOrHeight: 1920, // compress the image to this maximum width or height
+          useWebWorker: true,
+        };
+        try {
+          const compressedFile = await imageCompression(file, options);
+          const reader = new FileReader();
+          reader.onloadend = function () {
+            const base64String = reader.result as string;
+            setImage(base64String);
+          };
+          reader.readAsDataURL(compressedFile);
+        } catch (error) {
+          console.error("Error during image compression:", error);
+        }
+      }
     }
+  }
 
   return (
     <div className="flex flex-col mt-4">
       <input
-        value={commentBody}
-        onChange={(e) => setCommentBody(e.target.value)}
-        className="border-[1px] border-zinc-400 p-2"
+        value={messageBody}
+        onChange={(e) => setMessageBody(e.target.value)}
+        className="border-[1px] border-zinc-400 p-2 w-3/4"
         type="text"
         placeholder="What are your thoughts?"
       />
       <div className="flex flex-row">
-          <button
-            className="w-24 ml-1 text-sm p-1 transition-colors bg-gray-200 hover:bg-gray-300 rounded-lg"
-            onClick={() => {
-              onComment({ id: "4", body: commentBody, comments: [] });
-              setCommentBody("");
-            }}
-          >
-            Comment
-          </button>
-          <div className="file-input">
-            <input type="file" accept="image/*" onChange={() => handleFileChange} />
-          </div>
+        <button
+          className="w-24 ml-1 text-sm p-1 transition-colors bg-gray-200 hover:bg-gray-300 rounded-lg"
+          onClick={() => {
+            console.log("Message body: ", messageBody);
+            console.log("Image: ", image);
+            createNewMessage(messageBody, image);
+            setMessageBody("");
+            setIsReplying && setIsReplying(false);
+          }}
+        >
+          Comment
+        </button>
+        <div className="file-input">
+          <input type="file" accept="image/*" onChange={handleFileChange} />
+        </div>
+        <div className="flex flex-col mt-4">
+          {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        </div>
       </div>
     </div>
   );
