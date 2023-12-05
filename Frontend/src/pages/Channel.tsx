@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import ChannelList from "../components/ChannelList";
 import defaultAvatar from "../assets/defaultAvatar.png";
-import { FaReply } from "react-icons/fa";
+import { FaReply, FaTrash } from "react-icons/fa";
 import { FaArrowAltCircleUp, FaArrowAltCircleDown } from "react-icons/fa";
 import { useAuthContext } from "../hooks/useAuthContext";
 import imageCompression from "browser-image-compression";
@@ -26,6 +26,7 @@ interface Message {
   image: string;
   messages: Array<Message>;
   usersThatLiked: Array<string>;
+  usersThatDisliked: Array<string>;
 }
 
 const ChannelIdContext = React.createContext<string | undefined>(undefined);
@@ -49,8 +50,7 @@ const Channel: React.FC = () => {
         const data = await response.json();
         setMessages(
           data.map((message: Message) => ({
-            ...message,
-            likesCount: message.likesCount,
+            ...message
           }))
         );
       }
@@ -69,6 +69,7 @@ const Channel: React.FC = () => {
       image: image || "",
       likesCount: 0,
       usersThatLiked: [],
+      usersThatDisliked: [],
       messages: [],
     };
 
@@ -122,16 +123,23 @@ const MessageItem = ({ message }: MessageItemProps) => {
   const [voteCount, setVoteCount] = useState(0);
   const [hasVotedUp, setHasVotedUp] = useState(false);
   const [hasVotedDown, setHasVotedDown] = useState(false);
+  const [hasVotedNeutral, setHasVotedNeutral] = useState(true);
 
   useEffect(() => {
     setVoteCount(message.likesCount);
-    if (
-      message.usersThatLiked &&
-      message.usersThatLiked.includes(user.username)
-    ) {
+    if (message.usersThatLiked && message.usersThatLiked.includes(user.username)) {
+      console.log("User has liked");
       setHasVotedUp(true);
       setHasVotedDown(false);
+      setHasVotedNeutral(false);
+    } else if (message.usersThatDisliked && message.usersThatDisliked.includes(user.username)) {
+      console.log("User has disliked");
+      setHasVotedDown(true);
+      setHasVotedUp(false);
+      setHasVotedNeutral(false);
     } else {
+      console.log("User has not voted");
+      setHasVotedNeutral(true);
       setHasVotedUp(false);
       setHasVotedDown(false);
     }
@@ -172,15 +180,14 @@ const MessageItem = ({ message }: MessageItemProps) => {
   function handleUpvote() {
     // send a patch request to the backend to update the likes
     const upVoteDB = async () => {
-      const response = await fetch(`${baseURL}/api/messages/${message._id}`, {
+      const response = await fetch(`${baseURL}/api/messages/upvote/${message._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
-        body: JSON.stringify({
-          likesCount: voteCount + 1,
-          usersThatLiked: [...(message.usersThatLiked || []), user.username],
+        body: JSON.stringify({ 
+          user: user.username,
         }),
       });
       if (response.ok) {
@@ -188,9 +195,16 @@ const MessageItem = ({ message }: MessageItemProps) => {
         console.log(updatedMessage);
       }
     };
-    if (!hasVotedUp) {
+    if (!hasVotedUp && !hasVotedNeutral) {
+      setHasVotedUp(false);
+      setHasVotedDown(false);
+      setHasVotedNeutral(true);
+      setVoteCount(voteCount + 1);
+      upVoteDB();
+    } else if (!hasVotedUp && hasVotedNeutral) {
       setHasVotedUp(true);
       setHasVotedDown(false);
+      setHasVotedNeutral(false);
       setVoteCount(voteCount + 1);
       upVoteDB();
     }
@@ -199,17 +213,14 @@ const MessageItem = ({ message }: MessageItemProps) => {
   function handleDownvote() {
     // send a patch request to the backend to update the likes
     const downVoteDB = async () => {
-      const response = await fetch(`${baseURL}/api/messages/${message._id}`, {
+      const response = await fetch(`${baseURL}/api/messages/downvote/${message._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
-        body: JSON.stringify({
-          likesCount: voteCount - 1,
-          usersThatLiked: message.usersThatLiked 
-          ? message.usersThatLiked.filter((userThatLiked) => userThatLiked !== user.username)
-          : [],
+        body: JSON.stringify({ 
+          user: user.username,
         }),
       });
       if (response.ok) {
@@ -217,12 +228,41 @@ const MessageItem = ({ message }: MessageItemProps) => {
         console.log(updatedMessage);
       }
     };
-    if (!hasVotedDown) {
+    if (!hasVotedDown && !hasVotedNeutral) {
+      setHasVotedDown(false);
+      setHasVotedUp(false);
+      setHasVotedNeutral(true);
+      setVoteCount(voteCount - 1);
+      downVoteDB();
+    } else if (!hasVotedDown && hasVotedNeutral) {
       setHasVotedDown(true);
       setHasVotedUp(false);
+      setHasVotedNeutral(false);
       setVoteCount(voteCount - 1);
       downVoteDB();
     }
+  }
+
+  function deleteMessage() {
+    // send a delete request to the backend to delete the message
+    const deleteMessageDB = async () => {
+      const response = await fetch(`${baseURL}/api/messages/${message._id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      if (response.ok) {
+        const deletedMessage = await response.json();
+        console.log(deletedMessage);
+      }
+    };
+    setMessages([]);
+    deleteMessageDB();
+    // refresh the page
+    window.location.reload();
+
   }
 
   return (
@@ -282,7 +322,13 @@ const MessageItem = ({ message }: MessageItemProps) => {
               <FaReply className="mr-1" />
               Reply
             </button>
+            
           )}
+          {((user.email === "admin@email.com") || (user.username === message.author)) && (
+          <button onClick={deleteMessage}>
+            <FaTrash />
+          </button>
+           )} 
         </div>
         {isReplying && (
           <MessageInput

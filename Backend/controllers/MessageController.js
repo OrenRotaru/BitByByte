@@ -114,17 +114,40 @@ const MessageController = {
     deleteMessage: async (req, res) => {
         try {
             const id = req.params.id;
-            const rev = req.params.rev;
 
             // get the message to be deleted in full
             const messageToBeDeleted = await messagesDb.get(id);
 
+            // get all the messages that are replies to the message to be deleted recursively
+            // which means we need to get all the replies of the replies and so on
+
+            // all messages
+            const body = await messagesDb.list({ include_docs: true });
+            const messages = body.rows.map((row) => row.doc);
+
+            // function to get all the replies recursively
+            function getReplies(message) {
+                const replies = messages.filter(msg => msg.parentMessage_id === message._id);
+                if (replies.length > 0) {
+                    replies.forEach(getReplies);
+                }
+                return replies;
+            }
+
+            // get all the replies of the message to be deleted
+            const replies = getReplies(messageToBeDeleted);
+
+            // delete all the replies
+            replies.forEach(async reply => {
+                await messagesDb.destroy(reply._id, reply._rev);
+            });
+
+            // send the message in full to be deleted
+            res.status(200).json(messageToBeDeleted);
 
             // delete the message
-            const result = await messagesDb.destroy(id, rev);
+            const result = await messagesDb.destroy(id, messageToBeDeleted._rev);
 
-            res.status(200).json(result);
-            if (debug) console.log("deleted message");
         } catch (error) {
             if (debug) console.log("Could not delete message");
             res.status(500).json({ error: error.message });
@@ -136,20 +159,6 @@ const MessageController = {
         try {
             const id = req.params.id;
             let message = await messagesDb.get(id);
-
-            // if we are updating the likesCount
-            if (req.body.likesCount) {
-                // also update the likesCount of the user who owns the message
-                const user = await usersDb.find({
-                    selector: {
-                        username: message.author
-                    }
-                });
-                const userDoc = user.docs[0];
-                userDoc.likesCount = userDoc.likesCount + req.body.likesCount;
-                await usersDb.insert(userDoc);
-            }
-
 
             // Merge existing message with new data
             message = { ...message, ...req.body };
@@ -163,6 +172,88 @@ const MessageController = {
             res.status(500).json({ error: error.message });
         }
     },
+
+    // Upvote a message
+    upVoteMessage: async (req, res) => {
+        try {
+            const id = req.params.id;
+            if (debug) console.log("request body in upVoteMessage: ", req.body);
+            const {user} = req.body;
+            
+            // log user
+            if (debug) console.log("user", user);
+
+            let message = await messagesDb.get(id);
+
+
+            // Merge existing message with new data
+            message = { 
+                ...message, 
+                likesCount: message.likesCount + 1,
+              };
+
+            if (!message.usersThatLiked || !message.usersThatDisliked) {
+            message.usersThatLiked = message.usersThatLiked || [];
+            message.usersThatDisliked = message.usersThatDisliked || [];
+            }
+
+            // if the user that is liking does not exist in the usersThatLiked array or the usersThatDisliked array
+            // then add the user to the usersThatLiked array
+            if (!message.usersThatLiked.includes(user) && !message.usersThatDisliked.includes(user)) {
+                message.usersThatLiked.push(user);
+                
+            }
+
+            // remove the user from the usersThatDisliked array
+            message.usersThatDisliked = message.usersThatDisliked.filter(u => u !== user);
+
+            const result = await messagesDb.insert(message);
+            // send the complete message object back to the client
+            const updatedMessage = await messagesDb.get(result.id);
+            res.status(200).json(updatedMessage);
+            if (debug) console.log("upVoted message");
+        }
+        catch (error) {
+            if (debug) console.log("Could not upVote message");
+            if (debug) console.log(error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Downvote a message
+    downVoteMessage: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const {user} = req.body;
+            let message = await messagesDb.get(id);
+
+            // Merge existing message with new data
+            message = { ...message, likesCount: message.likesCount - 1 };
+
+            if (!message.usersThatLiked || !message.usersThatDisliked) {
+                message.usersThatLiked = message.usersThatLiked || [];
+                message.usersThatDisliked = message.usersThatDisliked || [];
+              }
+
+            // if the user that is disliking does not exist in the usersThatLiked array or the usersThatDisliked array
+            // then add the user to the usersThatDisliked array
+            if (!message.usersThatLiked.includes(user) && !message.usersThatDisliked.includes(user)) {
+                message.usersThatDisliked.push(user);
+            }
+            // remove the user from the usersThatLiked array
+            message.usersThatLiked = message.usersThatLiked.filter(u => u !== user);
+
+            const result = await messagesDb.insert(message);
+            // send the complete message object back to the client
+            const updatedMessage = await messagesDb.get(result.id);
+            res.status(200).json(updatedMessage);
+            if (debug) console.log("downVoted message");
+        }
+        catch (error) {
+            if (debug) console.log("Could not downVote message");
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = MessageController;

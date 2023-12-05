@@ -6,6 +6,8 @@ const {
   deleteMessage,
   updateMessage,
   getReplies,
+  upVoteMessage,
+  downVoteMessage,
 } = require("../controllers/MessageController");
 
 const requireAuth = require("../middleware/requireAuth");
@@ -32,6 +34,12 @@ router.delete("/:id", deleteMessage);
 
 // UPDATE a message
 router.patch("/:id", updateMessage);
+
+// Upvote a message
+router.patch("/upvote/:id", upVoteMessage);
+
+// DownVote a message
+router.patch("/downvote/:id", downVoteMessage);
 
 module.exports = router;
 

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./output.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { AuthContextProvider } from "./context/AuthContext.tsx";
 import {ChannelContextProvider} from "./context/ChannelContext.tsx";
 

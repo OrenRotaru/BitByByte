@@ -7,6 +7,7 @@ const setupSocketHandlers = require("./SocketHandlers");
 const ChannelRoutes = require("./routes/ChannelRoutes");
 const UserRoutes = require("./routes/UserRoutes");
 const MessageRoutes = require("./routes/MessageRoutes");
+const SearchRoutes = require("./routes/SearchRoutes");
 
 // middleware
 app.use(cors());
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 app.use("/api/channels", ChannelRoutes);
 app.use("/api/user", UserRoutes);
 app.use("/api/messages", MessageRoutes);
+app.use("/api/search", SearchRoutes);
 
 // listening
 const server = app.listen(port, () => {

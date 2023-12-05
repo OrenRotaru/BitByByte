@@ -4,6 +4,7 @@ import { useContext, createContext, useState } from "react";
 import { ReactNode } from "react";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useChannelsContext } from "../hooks/useChannelContext";
+import BitByByte from "../assets/BitByByte.png";
 
 import { FiTrash2 } from "react-icons/fi";
 
@@ -59,7 +60,7 @@ export default function Sidebar({ children }: SidebarProps) {
       <nav className="h-full flex flex-col bg-white border-r shadow-sm">
         <div className="p-4 pb-2 flex justify-between items-center">
           <img
-            src="https://img.logoipsum.com/243.svg"
+            src={BitByByte}
             className={`overflow-hidden transition-all ${
               expanded ? "w-32" : "w-0"
             }`}
@@ -198,7 +199,7 @@ export function SidebarItem({
         <span className="p-4 m-2" onClick={goToChannel}>
           {text}
         </span>
-        {expanded && (
+        {(expanded && user.email === "admin@email.com") && (
           <button onClick={deleteChannel}>
             <FiTrash2 size={20} />
           </button>
