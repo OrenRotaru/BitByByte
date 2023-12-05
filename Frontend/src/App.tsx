@@ -9,15 +9,11 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Channel from "./pages/Channel";
-import { useEffect, useState } from "react";
+import Profile from "./pages/Profile";
 
 function App() {
-const { user } = useAuthContext();
-const [loading, setLoading] = useState(true);
+const { user, loading } = useAuthContext();
 
-useEffect(() => {
-  setLoading(false);
-}, []);
 
 if (loading) {
   return <div>Loading...</div>;
@@ -34,6 +30,7 @@ if (loading) {
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" /> } />
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/home" /> } />
             <Route path="/home/channel/:channelId" element={user ? <Channel />  : <Navigate to="/" /> } />
+            <Route path="/user/:userId" element={user ? <Profile /> : <Navigate to="/" /> } />
           </Routes>
         </div>
       </BrowserRouter>

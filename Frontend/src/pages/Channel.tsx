@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
-import ChannelList from "../components/ChannelList";
 import defaultAvatar from "../assets/defaultAvatar.png";
 import { FaReply, FaTrash } from "react-icons/fa";
 import { FaArrowAltCircleUp, FaArrowAltCircleDown } from "react-icons/fa";
@@ -19,6 +18,7 @@ interface Message {
   _id: string;
   channel: string;
   author: string;
+  profilePic: string;
   timeStamp: string;
   body: string;
   parentMessage_id: string;
@@ -35,34 +35,50 @@ const Channel: React.FC = () => {
   const { channelId } = useParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const { user } = useAuthContext();
+  const [channelName, setChannelName] = useState("");
 
   useEffect(() => {
-    const fetchMessagesByChannel = async () => {
-      const response = await fetch(
-        `${baseURL}/api/messages/channel/${channelId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(
-          data.map((message: Message) => ({
-            ...message
-          }))
-        );
-      }
-    };
-
     fetchMessagesByChannel();
+    fetchChannel();
   }, []);
+
+
+  const fetchMessagesByChannel = async () => {
+    const response = await fetch(
+      `${baseURL}/api/messages/channel/${channelId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      setMessages(
+        data.map((message: Message) => ({
+          ...message
+        }))
+      );
+    }
+  };
+
+  const fetchChannel = async () => {
+    const response = await fetch(`${baseURL}/api/channels/${channelId}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setChannelName(data.name);
+    }
+  };
 
   const createNewMessage = (messageBody: string, image: string) => {
     const messageSend = {
       channel: channelId,
       author: user.username,
+      profilePic: user.profilePic,
       timeStamp: dateFormatter.format(new Date()),
       body: messageBody,
       parentMessage_id: "",
@@ -97,7 +113,7 @@ const Channel: React.FC = () => {
       <div>
         <h1>Channel {channelId}</h1>
         {/* Add your channel content here */}
-        <p>This is the page for channel {channelId}.</p>
+        <p>This is the page for {channelName}.</p>
       </div>
       <MessageInput createNewMessage={createNewMessage} />
       <div className="flex flex-col gap-2 mt-10">
@@ -149,6 +165,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
     const newMessage = {
       channel: channelId,
       author: user.username,
+      profilePic: user.profilePic,
       timeStamp: dateFormatter.format(new Date()),
       body: messageBody,
       parentMessage_id: message._id,
@@ -270,7 +287,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
       <div className="col-span-1 flex flex-col items-center">
         <img
           className="rounded-full w-10 h-10"
-          src={defaultAvatar}
+          src={message.profilePic || defaultAvatar}
           alt="profile"
         />
         <div className="threadline border-l-2 border-gray-400 h-full mx-auto"></div>

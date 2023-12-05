@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, {useEffect } from "react";
 import { useChannelsContext } from "../hooks/useChannelContext";
 import { useAuthContext } from "../hooks/useAuthContext";
 import Sidebar from "./Sidebar";
 import { SidebarItem } from "./Sidebar";
 import { LayoutDashboard } from "lucide-react";
+
+interface Channel {
+  _id: string;
+  name: string;
+}
 
 const ChannelList: React.FC = () => {
   const { channels, dispatch } = useChannelsContext();
@@ -42,7 +47,7 @@ const ChannelList: React.FC = () => {
       <div className="flex flex-col min-h-screen z-10 fixed">
         <Sidebar>
           {channels
-            ? channels.map((channel) => (
+            ? channels.map((channel: Channel) => (
                 <SidebarItem
                   key={channel._id}
                   id={channel._id}

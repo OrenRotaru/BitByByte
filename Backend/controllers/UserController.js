@@ -36,7 +36,7 @@ const loginUser = async (req, res) => {
   // create token
   const token = createToken(user.docs[0]._id);
 
-  res.status(200).json({ username: user.docs[0].username, email: email, token: token });
+  res.status(200).json({ id: user.docs[0]._id, username: user.docs[0].username, email: email, token: token });
 };
 
 // signup user
@@ -94,7 +94,7 @@ const signupUser = async (req, res) => {
     // create token
     const token = createToken(createdUserId);
 
-    res.status(200).json({ username, email, token });
+    res.status(200).json({ id: createdUserId, username, email, token });
     if (debug) console.log("User with email: " + email + " created.");
   } catch (err) {
     res
@@ -132,6 +132,19 @@ const deleteUser = async (req, res) => {
   }
 }
 
+const getUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const user = await usersDb.get(id);
+    // Remove the password field from the user document
+    delete user.password;
+    res.status(200).json(user);
+    if (debug) console.log("sent user to client");
+  } catch (error) {
+    res.status(500).json({ msg: "Could not get, Internal Server Error", error: error.message });
+  }
+}
+
 const patchUser = async (req, res) => {
 
   const data = req.body;
@@ -150,4 +163,4 @@ const patchUser = async (req, res) => {
 }
 
 
-module.exports = { signupUser, loginUser, patchUser, getUsers, deleteUser };
+module.exports = { signupUser, loginUser, patchUser, getUsers, getUser, deleteUser };

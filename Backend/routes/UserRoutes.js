@@ -1,7 +1,7 @@
 const express = require("express");
 
 // controller functions
-const {signupUser, loginUser, patchUser, getUsers, deleteUser} = require("../controllers/UserController");
+const {signupUser, loginUser, patchUser, getUsers, getUser, deleteUser} = require("../controllers/UserController");
 const requireAuth = require("../middleware/requireAuth");
 
 const router = express.Router();
@@ -9,6 +9,9 @@ const router = express.Router();
 
 // get all users
 router.get("/", requireAuth, getUsers);
+
+// get user by id
+router.get("/:id", requireAuth, getUser);
 
 // delete user route
 router.delete("/:id", requireAuth, deleteUser);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ChannelList from "../components/ChannelList";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useNavigate } from "react-router-dom";
@@ -225,30 +225,32 @@ const Home = () => {
                     key={result._id}
                     className="p-2 border border-gray-700 flex items-center justify-between"
                   >
-                    <div className="flex flex-col">
-                      <div className="font-bold text-lg mb-2">
-                        {result.username}
+                    <button className="flex items-center justify-between" onClick={() => navigate(`/user/${result._id}`)}>
+                      <div className="flex flex-col">
+                        <div className="font-bold text-lg mb-2">
+                          {result.username}
+                        </div>
+                        <div className="text-gray-700 mb-2">
+                          Email: {result.email}
+                        </div>
                       </div>
-                      <div className="text-gray-700 mb-2">
-                        Email: {result.email}
-                      </div>
-                    </div>
-                    <span className="flex items-center justify-between">
-                      <FaHeart className=" mr-2" />
-                      {result.totalUserLikes}
-                    </span>
-                    <span className="flex items-center justify-between">
-                      <MdOutlineSignpost className=" mr-2" />
-                      {result.totalPosts}
-                    </span>
+                      <span className="flex items-center justify-between">
+                        <FaHeart className=" mr-2" />
+                        {result.totalUserLikes}
+                      </span>
+                      <span className="flex items-center justify-between">
+                        <MdOutlineSignpost className=" mr-2" />
+                        {result.totalPosts}
+                      </span>
+                    </button>
                     {user.email === "admin@email.com" && (
-                      <button
-                        onClick={() => deleteUser(result._id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <FiTrash2 />
-                      </button>
-                    )}
+                        <button
+                          onClick={() => deleteUser(result._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      )}
                   </div>
                 ))
               : null}

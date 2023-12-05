@@ -86,16 +86,18 @@ export default function Sidebar({ children }: SidebarProps) {
             }}
             className="flex justify-between mb-3 transition-all"
           >
-            <input
-              type="text"
-              value={newChannelName}
-              className="form-control"
-              onChange={(e) => setNewChannelName(e.target.value)}
-              placeholder="New channel name"
-            />
-            <button type="submit" className="btn btn-primary">
-              Create Channel
-            </button>
+            <span className="mb-10">
+              <input
+                type="text"
+                value={newChannelName}
+                className="form-control"
+                onChange={(e) => setNewChannelName(e.target.value)}
+                placeholder="New channel name"
+              />
+              <button type="submit" className="btn btn-primary">
+                Create Channel
+              </button>
+            </span>
           </form>
         )}
 

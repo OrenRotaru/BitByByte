@@ -5,24 +5,28 @@ import "../App.css";
 import logo from "../assets/BiByByte_Logo.svg"; // Replace with the path to your logo
 import { useLogout } from "../hooks/useLogout";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const { logout } = useLogout();
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const handleClick = () => {
     logout();
   };
   return (
     <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark" className="justify-content-between p-2">
-      <Navbar.Brand href="#home">
-        <img
-          src={logo}
-          width="30"
-          height="30"
-          className="d-inline-block align-top"
-          alt="BitByByte logo"
-        />
-        {" BitByByte"}
+      <Navbar.Brand>
+        <button onClick={() => navigate("/home")}>
+          <img
+            src={logo}
+            width="30"
+            height="30"
+            className="d-inline-block align-top"
+            alt="BitByByte logo"
+          />
+          {" BitByByte"}
+        </button>
       </Navbar.Brand>
       {user && (
             <div>
