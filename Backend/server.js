@@ -8,6 +8,8 @@ const ChannelRoutes = require("./routes/ChannelRoutes");
 const UserRoutes = require("./routes/UserRoutes");
 const MessageRoutes = require("./routes/MessageRoutes");
 const SearchRoutes = require("./routes/SearchRoutes");
+const nano = require("nano")(process.env.COUCHDB_URL);
+const messagesDb = nano.use('messages');
 
 // middleware
 app.use(cors());
@@ -31,14 +33,15 @@ const server = app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
 
-/***************************************************/
+// Create index on likesCount
+messagesDb.createIndex({
+    index: {
+        fields: ['likesCount']
+    }
+}).then(() => {
+    console.log('Index created successfully');
+}).catch((err) => {
+    console.error('Error creating index', err);
+});
 
-// // socket.io
-// const io = require("socket.io")(server, {
-//   cors: {
-//     origin: "http://localhost",
-//   },
-// });
 
-// // pass io to the socket handlers
-// setupSocketHandlers(io);
