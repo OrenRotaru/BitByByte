@@ -3,7 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
-const setupSocketHandlers = require("./SocketHandlers");
 const ChannelRoutes = require("./routes/ChannelRoutes");
 const UserRoutes = require("./routes/UserRoutes");
 const MessageRoutes = require("./routes/MessageRoutes");
@@ -25,7 +24,7 @@ nano.db
     console.log("Created messages database");
   })
   .catch((err) => {
-    console.error("Error creating messages database", err);
+   // console.error("Error creating messages database", err);
   });
 
 nano.db
@@ -34,7 +33,7 @@ nano.db
     console.log("Created channels database");
   })
   .catch((err) => {
-    console.error("Error creating channels database", err);
+    // console.error("Error creating channels database", err);
   });
 
 nano.db
@@ -43,7 +42,7 @@ nano.db
     console.log("Created users database");
   })
   .catch((err) => {
-    console.error("Error creating users database", err);
+    // console.error("Error creating users database", err);
   });
 
   
