@@ -1,6 +1,9 @@
 # BitByByte
 BitByByte is a Developers chat for programming help. Project for CMPT353
 
+link to demo video:
+(Youtube)[https://youtu.be/Cv93P9baYrE]
+
 ### Design and implement a tool that allows users to
 ○ Post programming questions
 ○ Provide answers/responses
